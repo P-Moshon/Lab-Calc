@@ -15,7 +15,8 @@
         .row { display: flex; gap: 8px; width: 100%; box-sizing: border-box; }
         input, select { padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 16px; box-sizing: border-box; background: #fff; -webkit-appearance: none; }
         input { flex: 2; min-width: 0; }
-        select { flex: 1; min-width: 75px; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg%20xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg"%20width%3D"292.4"%20height%3D"292.4"><path%20fill%3D"%23666"%20d%3D"M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z"%2F><%2Fsvg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; padding-right: 24px; }
+        input:disabled { background-color: #f0f0f0; cursor: not-allowed; color: #999; }
+        select { flex: 1; min-width: 90px; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg%20xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg"%20width%3D"292.4"%20height%3D"292.4"><path%20fill%3D"%23666"%20d%3D"M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z"%2F><%2Fsvg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; padding-right: 24px; }
         .result-box { background: #f1f7fe; padding: 12px; border-radius: 10px; margin-top: 10px; text-align: center; border: 1px solid #d2e3fc; }
         .result-val { font-size: 1.4rem; font-weight: bold; color: var(--primary); display: block; margin-top: 5px; word-break: break-all; }
         .highlight { background: #ebfaf9; border-color: #b2f2bb; }
@@ -29,7 +30,7 @@
     <h2>Lab Calculator</h2>
     
     <div class="input-group">
-        <label>Molecular Weight (MW)</label>
+        <label id="mwLabel">Molecular Weight (MW)</label>
         <input type="number" id="mw" step="any" placeholder="g/mol" oninput="calculate()">
     </div>
 
@@ -38,9 +39,17 @@
         <div class="row">
             <input type="number" id="targetC" step="any" placeholder="Conc." oninput="calculate()">
             <select id="cUnit" onchange="calculate()">
-                <option value="1">M</option>
-                <option value="0.001" selected>mM</option>
-                <option value="0.000001">µM</option>
+                <optgroup label="Molarity">
+                    <option value="M">M</option>
+                    <option value="mM" selected>mM</option>
+                    <option value="uM">µM</option>
+                </optgroup>
+                <optgroup label="Mass/Vol">
+                    <option value="g/L">g/L</option>
+                    <option value="mg/mL">mg/mL</option>
+                    <option value="mg/L">mg/L</option>
+                    <option value="ug/mL">µg/mL</option>
+                </optgroup>
             </select>
         </div>
     </div>
@@ -99,35 +108,56 @@
 
 <script>
     function calculate() {
+        const mwInput = document.getElementById('mw');
+        const cUnit = document.getElementById('cUnit').value;
+        
         const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
-        const getUnit = (id) => parseFloat(document.getElementById(id).value);
+        const getUnitValue = (id) => parseFloat(document.getElementById(id).value);
 
-        const mw = getVal('mw');
-        const targetCValue = getVal('targetC');
-        const targetCUnit = getUnit('cUnit');
-        const targetVValue = getVal('targetV');
-        const targetVUnit = getUnit('vUnit');
-        const actualMValue = getVal('actM');
-        const actualMUnit = getUnit('actMUnit');
+        let concentrationInGperL = 0;
+        let isMolar = true;
 
-        const targetC = targetCValue * targetCUnit;
-        const targetV = targetVValue * targetVUnit;
-        const actualM = actualMValue * actualMUnit;
+        // Determine if Molar or Mass-based
+        if (["g/L", "mg/mL", "mg/L", "ug/mL"].includes(cUnit)) {
+            isMolar = false;
+            mwInput.disabled = true;
+            mwInput.placeholder = "Not needed";
+            
+            const cVal = getVal('targetC');
+            if (cUnit === "g/L" || cUnit === "mg/mL") concentrationInGperL = cVal;
+            else if (cUnit === "mg/L") concentrationInGperL = cVal / 1000;
+            else if (cUnit === "ug/mL") concentrationInGperL = cVal / 1000;
+        } else {
+            isMolar = true;
+            mwInput.disabled = false;
+            mwInput.placeholder = "g/mol";
+            
+            const mw = getVal('mw');
+            const cVal = getVal('targetC');
+            let molarity = 0;
+            if (cUnit === "M") molarity = cVal;
+            else if (cUnit === "mM") molarity = cVal / 1000;
+            else if (cUnit === "uM") molarity = cVal / 1000000;
+            
+            concentrationInGperL = molarity * mw;
+        }
 
-        if (mw > 0 && targetC > 0) {
-            // 1. Mass Calculation
-            if (targetV > 0) {
-                const reqGrams = mw * targetC * targetV;
-                document.getElementById('massRes').innerText = (reqGrams * getUnit('outMUnit')).toFixed(4);
-            } else { document.getElementById('massRes').innerText = "-"; }
+        const targetV = getVal('targetV') * getUnitValue('vUnit'); // in Liters
+        const actualM = getVal('actM') * getUnitValue('actMUnit'); // in Grams
 
-            // 2. Volume Correction
-            if (actualM > 0) {
-                const neededL = actualM / (mw * targetC);
-                document.getElementById('finalV').innerText = (neededL * getUnit('outVUnit')).toFixed(4);
-            } else { document.getElementById('finalV').innerText = "-"; }
+        // 1. Mass Calculation
+        if (concentrationInGperL > 0 && targetV > 0) {
+            const reqGrams = concentrationInGperL * targetV;
+            document.getElementById('massRes').innerText = (reqGrams * getUnitValue('outMUnit')).toFixed(4);
         } else {
             document.getElementById('massRes').innerText = "-";
+        }
+
+        // 2. Volume Correction
+        if (concentrationInGperL > 0 && actualM > 0) {
+            const neededL = actualM / concentrationInGperL;
+            document.getElementById('finalV').innerText = (neededL * getUnitValue('outVUnit')).toFixed(4);
+        } else {
             document.getElementById('finalV').innerText = "-";
         }
     }
