@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lab Calculator</title>
+    <style>
+        :root { --primary: #1a73e8; --secondary: #38b2ac; --bg: #f8f9fa; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; }
+        .card { background: white; padding: 1.2rem; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); width: 100%; max-width: 450px; box-sizing: border-box; position: relative; }
+        h2 { color: var(--primary); text-align: center; margin: 0 0 15px 0; font-size: 1.4rem; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        h3 { color: #5f6368; font-size: 1rem; margin: 20px 0 10px 0; border-left: 4px solid var(--primary); padding-left: 8px; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-weight: 600; color: #444; font-size: 0.85rem; }
+        .row { display: flex; gap: 8px; width: 100%; box-sizing: border-box; }
+        input, select { padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 16px; box-sizing: border-box; background: #fff; -webkit-appearance: none; }
+        input { flex: 2; min-width: 0; }
+        select { flex: 1; min-width: 75px; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg%20xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg"%20width%3D"292.4"%20height%3D"292.4"><path%20fill%3D"%23666"%20d%3D"M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z"%2F><%2Fsvg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; padding-right: 24px; }
+        .result-box { background: #f1f7fe; padding: 12px; border-radius: 10px; margin-top: 10px; text-align: center; border: 1px solid #d2e3fc; }
+        .result-val { font-size: 1.4rem; font-weight: bold; color: var(--primary); display: block; margin-top: 5px; word-break: break-all; }
+        .highlight { background: #ebfaf9; border-color: #b2f2bb; }
+        .highlight .result-val { color: #2d6a4f; }
+        .footer-credit { text-align: right; font-size: 10px; color: #ccc; margin-top: 15px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Lab Calculator</h2>
+    
+    <div class="input-group">
+        <label>Molecular Weight (MW)</label>
+        <input type="number" id="mw" step="any" placeholder="g/mol" oninput="calculate()">
+    </div>
+
+    <div class="input-group">
+        <label>Target Concentration</label>
+        <div class="row">
+            <input type="number" id="targetC" step="any" placeholder="Conc." oninput="calculate()">
+            <select id="cUnit" onchange="calculate()">
+                <option value="1">M</option>
+                <option value="0.001" selected>mM</option>
+                <option value="0.000001">µM</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Target Volume</label>
+        <div class="row">
+            <input type="number" id="targetV" step="any" placeholder="Vol." oninput="calculate()">
+            <select id="vUnit" onchange="calculate()">
+                <option value="1">L</option>
+                <option value="0.001" selected>mL</option>
+                <option value="0.000001">µL</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="result-box">
+        <label>Required Mass</label>
+        <div class="row" style="justify-content: center; align-items: center; margin-top:5px;">
+            <span id="massRes" class="result-val">-</span>
+            <select id="outMUnit" style="flex:0; min-width:75px; margin-left:10px;" onchange="calculate()">
+                <option value="1">g</option>
+                <option value="1000" selected>mg</option>
+                <option value="1000000">µg</option>
+            </select>
+        </div>
+    </div>
+
+    <h3>Volume Correction</h3>
+    <div class="input-group">
+        <label>Actual Mass Weighed</label>
+        <div class="row">
+            <input type="number" id="actM" step="any" placeholder="Actual weight" oninput="calculate()">
+            <select id="actMUnit" onchange="calculate()">
+                <option value="1">g</option>
+                <option value="0.001" selected>mg</option>
+                <option value="0.000001">µg</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="result-box highlight">
+        <label>Final Volume Needed</label>
+        <div class="row" style="justify-content: center; align-items: center; margin-top:5px;">
+            <span id="finalV" class="result-val">-</span>
+            <select id="outVUnit" style="flex:0; min-width:75px; margin-left:10px;" onchange="calculate()">
+                <option value="1">L</option>
+                <option value="1000" selected>mL</option>
+                <option value="1000000">µL</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="footer-credit">Developed by Moshon</div>
+</div>
+
+<script>
+    function calculate() {
+        const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
+        const getUnit = (id) => parseFloat(document.getElementById(id).value);
+
+        const mw = getVal('mw');
+        const targetCValue = getVal('targetC');
+        const targetCUnit = getUnit('cUnit');
+        const targetVValue = getVal('targetV');
+        const targetVUnit = getUnit('vUnit');
+        const actualMValue = getVal('actM');
+        const actualMUnit = getUnit('actMUnit');
+
+        const targetC = targetCValue * targetCUnit;
+        const targetV = targetVValue * targetVUnit;
+        const actualM = actualMValue * actualMUnit;
+
+        if (mw > 0 && targetC > 0) {
+            // 1. Mass Calculation
+            if (targetV > 0) {
+                const reqGrams = mw * targetC * targetV;
+                document.getElementById('massRes').innerText = (reqGrams * getUnit('outMUnit')).toFixed(4);
+            } else { document.getElementById('massRes').innerText = "-"; }
+
+            // 2. Volume Correction
+            if (actualM > 0) {
+                const neededL = actualM / (mw * targetC);
+                document.getElementById('finalV').innerText = (neededL * getUnit('outVUnit')).toFixed(4);
+            } else { document.getElementById('finalV').innerText = "-"; }
+        } else {
+            document.getElementById('massRes').innerText = "-";
+            document.getElementById('finalV').innerText = "-";
+        }
+    }
+</script>
+
+</body>
+</html>
